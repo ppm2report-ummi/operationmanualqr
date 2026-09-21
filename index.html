@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>QR Generator</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin: 40px; }
+    #qrcode { margin: 20px auto; }
+    input, button { padding: 10px; margin: 5px; width: 300px; }
+    canvas { margin-top: 20px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>QR Code Generator</h1>
+  <form id="qrForm">
+    <input type="text" id="name" placeholder="Enter Name" required><br>
+    <input type="text" id="link" placeholder="Enter Link" required><br>
+    <input type="text" id="instruction" placeholder="Instruction Text" value="Scan for Operation Manual"><br>
+    <button type="submit">Generate QR</button>
+  </form>
+
+  <div id="qrcode"></div>
+  <canvas id="finalCanvas"></canvas><br>
+  <button id="downloadBtn" style="display:none;">Download PNG</button>
+
+  <!-- QRCode.js library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    const form = document.getElementById("qrForm");
+    const qrDiv = document.getElementById("qrcode");
+    const canvas = document.getElementById("finalCanvas");
+    const ctx = canvas.getContext("2d");
+    const downloadBtn = document.getElementById("downloadBtn");
+
+    form.addEventListener("submit", function(e) {
+      e.preventDefault();
+      qrDiv.innerHTML = ""; // clear old QR
+
+      const name = document.getElementById("name").value;
+      const link = document.getElementById("link").value;
+      const instruction = document.getElementById("instruction").value;
+
+      // Generate QR
+      const qr = new QRCode(qrDiv, {
+        text: link,
+        width: 300,
+        height: 300,
+        colorDark: "#4B0082",
+        colorLight: "#ffffff"
+      });
+
+      // Wait a moment for QR to render
+      setTimeout(() => {
+        const qrCanvas = qrDiv.querySelector("canvas");
+        const qrWidth = qrCanvas.width;
+        const qrHeight = qrCanvas.height;
+
+        // Scale canvas to fit text + QR
+        const topSpace = 80;
+        const bottomSpace = 80;
+        canvas.width = qrWidth;
+        canvas.height = qrHeight + topSpace + bottomSpace;
+
+        // Fill background
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw QR
+        ctx.drawImage(qrCanvas, 0, topSpace);
+
+        // Scale font relative to QR size
+        const titleFontSize = Math.max(qrWidth / 10, 20);
+        const smallFontSize = Math.max(qrWidth / 14, 16);
+
+        ctx.fillStyle = "#4B0082";
+        ctx.font = `${titleFontSize}px Arial`;
+        ctx.textAlign = "center";
+        ctx.fillText(name, qrWidth / 2, titleFontSize);
+
+        ctx.font = `${smallFontSize}px Arial`;
+        ctx.fillText(instruction, qrWidth / 2, qrHeight + topSpace + smallFontSize + 10);
+
+        // Show download button
+        downloadBtn.style.display = "inline-block";
+      }, 500);
+    });
+
+    // Download PNG
+    downloadBtn.addEventListener("click", () => {
+      const link = document.createElement("a");
+      link.download = "qr_code.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    });
+  </script>
+</body>
+</html>
