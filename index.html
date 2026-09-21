@@ -27,9 +27,8 @@
     const entriesDiv = document.getElementById("entries");
     const resultsDiv = document.getElementById("results");
 
-    // Load logo image (must be in same folder as index.html)
     const logoImg = new Image();
-    logoImg.src = "ummilogo.png";
+    logoImg.src = "ummilogo.png"; // must be in same folder
 
     function addEntry() {
       const div = document.createElement("div");
@@ -43,13 +42,11 @@
     }
 
     function removeEntry() {
-      if (entriesDiv.lastChild) {
-        entriesDiv.removeChild(entriesDiv.lastChild);
-      }
+      if (entriesDiv.lastChild) entriesDiv.removeChild(entriesDiv.lastChild);
     }
 
     function generateAll() {
-      resultsDiv.innerHTML = ""; // clear old results
+      resultsDiv.innerHTML = "";
       const entries = document.querySelectorAll(".entry");
       entries.forEach((entry) => {
         const name = entry.querySelector(".name").value.trim();
@@ -59,7 +56,7 @@
 
         // Create QR
         const qrDiv = document.createElement("div");
-        const qr = new QRCode(qrDiv, {
+        new QRCode(qrDiv, {
           text: link,
           width: 300,
           height: 300,
@@ -67,16 +64,14 @@
           colorLight: "#ffffff"
         });
 
-        // Wait for QR to render
         setTimeout(() => {
           const qrCanvas = qrDiv.querySelector("canvas");
-          if (!qrCanvas) return; // safety check
+          if (!qrCanvas) return;
 
           const qrWidth = qrCanvas.width;
           const qrHeight = qrCanvas.height;
+          const topSpace = 80, bottomSpace = 80;
 
-          const topSpace = 80;
-          const bottomSpace = 80;
           const canvas = document.createElement("canvas");
           const ctx = canvas.getContext("2d");
           canvas.width = qrWidth;
@@ -86,13 +81,7 @@
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(qrCanvas, 0, topSpace);
 
-          // Overlay logo once loaded
-          logoImg.onload = () => {
-            const logoSize = qrWidth * 0.20;  // 20% of QR width
-            const x = (qrWidth - logoSize) / 2;
-            const y = topSpace + (qrHeight - logoSize) / 2;
-            ctx.drawImage(logoImg, x, y, logoSize, logoSize);
-          };
+          // Overlay logo if available
           if (logoImg.complete) {
             const logoSize = qrWidth * 0.20;
             const x = (qrWidth - logoSize) / 2;
@@ -100,17 +89,17 @@
             ctx.drawImage(logoImg, x, y, logoSize, logoSize);
           }
 
-          // Scale fonts
+          // Text scaling
           const titleFontSize = Math.max(qrWidth / 10, 20);
           const smallFontSize = Math.max(qrWidth / 14, 16);
 
           ctx.fillStyle = "#4B0082";
           ctx.textAlign = "center";
           ctx.font = `${titleFontSize}px Arial`;
-          wrapText(ctx, name, qrWidth / 2, titleFontSize, qrWidth, titleFontSize);
+          ctx.fillText(name, qrWidth / 2, titleFontSize);
 
           ctx.font = `${smallFontSize}px Arial`;
-          wrapText(ctx, instruction, qrWidth / 2, qrHeight + topSpace + smallFontSize + 10, qrWidth, smallFontSize);
+          ctx.fillText(instruction, qrWidth / 2, qrHeight + topSpace + smallFontSize + 10);
 
           // Add download button
           const container = document.createElement("div");
@@ -129,25 +118,7 @@
       });
     }
 
-    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-      const words = text.split(" ");
-      let line = "";
-      for (let n = 0; n < words.length; n++) {
-        const testLine = line + words[n] + " ";
-        const testWidth = ctx.measureText(testLine).width;
-        if (testWidth > maxWidth && n > 0) {
-          ctx.fillText(line, x, y);
-          line = words[n] + " ";
-          y += lineHeight + 5;
-        } else {
-          line = testLine;
-        }
-      }
-      ctx.fillText(line, x, y);
-    }
-
-    // Start with one entry
-    addEntry();
+    addEntry(); // start with one entry
   </script>
 </body>
 </html>
