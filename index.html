@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>QR Generator</title>
+  <title>QR Generator with Logo</title>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; margin: 40px; }
     .entry { margin: 10px auto; padding: 10px; border: 1px solid #ccc; width: 600px; }
@@ -27,6 +27,10 @@
     const entriesDiv = document.getElementById("entries");
     const resultsDiv = document.getElementById("results");
 
+    // Load logo image
+    const logoImg = new Image();
+    logoImg.src = "ummilogo.png"; // place ummilogo.png in same folder as index.html
+
     function addEntry() {
       const div = document.createElement("div");
       div.className = "entry";
@@ -47,7 +51,7 @@
     function generateAll() {
       resultsDiv.innerHTML = ""; // clear old results
       const entries = document.querySelectorAll(".entry");
-      entries.forEach((entry, index) => {
+      entries.forEach((entry) => {
         const name = entry.querySelector(".name").value.trim();
         const link = entry.querySelector(".link").value.trim();
         const instruction = entry.querySelector(".instruction").value.trim();
@@ -78,6 +82,14 @@
           ctx.fillStyle = "white";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(qrCanvas, 0, topSpace);
+
+          // Overlay logo in center
+          if (logoImg.complete) {
+            const logoSize = qrWidth / 5;
+            const x = (qrWidth - logoSize) / 2;
+            const y = topSpace + (qrHeight - logoSize) / 2;
+            ctx.drawImage(logoImg, x, y, logoSize, logoSize);
+          }
 
           // Scale fonts
           const titleFontSize = Math.max(qrWidth / 10, 20);
