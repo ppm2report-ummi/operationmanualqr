@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>QR Generator with Logo</title>
+  <title>QR Generator with Logo + ZIP</title>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; margin: 40px; }
     .entry { margin: 10px auto; padding: 10px; border: 1px solid #ccc; width: 600px; }
@@ -19,16 +19,25 @@
   <button onclick="removeEntry()">Remove Link</button>
   <br><br>
   <button onclick="generateAll()">Generate All QR Codes</button>
+  <button id="downloadZipBtn" style="display:none;">Download All as ZIP</button>
   <div id="results"></div>
 
-  <!-- QRCode.js library -->
+  <!-- QRCode.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- JSZip -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- FileSaver.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
   <script>
     const entriesDiv = document.getElementById("entries");
     const resultsDiv = document.getElementById("results");
+    const downloadZipBtn = document.getElementById("downloadZipBtn");
 
     const logoImg = new Image();
     logoImg.src = "ummilogo.png"; // must be in same folder
+
+    let generatedCanvases = []; // store canvases for ZIP
 
     function addEntry() {
       const div = document.createElement("div");
@@ -47,6 +56,7 @@
 
     function generateAll() {
       resultsDiv.innerHTML = "";
+      generatedCanvases = [];
       const entries = document.querySelectorAll(".entry");
       entries.forEach((entry) => {
         const name = entry.querySelector(".name").value.trim();
@@ -54,7 +64,6 @@
         const instruction = entry.querySelector(".instruction").value.trim();
         if (!name || !link) return;
 
-        // Create QR
         const qrDiv = document.createElement("div");
         new QRCode(qrDiv, {
           text: link,
@@ -81,15 +90,17 @@
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(qrCanvas, 0, topSpace);
 
-          // Overlay logo if available
+          // Logo overlay
+          const logoSize = qrWidth * 0.20;
+          const x = (qrWidth - logoSize) / 2;
+          const y = topSpace + (qrHeight - logoSize) / 2;
           if (logoImg.complete) {
-            const logoSize = qrWidth * 0.20;
-            const x = (qrWidth - logoSize) / 2;
-            const y = topSpace + (qrHeight - logoSize) / 2;
             ctx.drawImage(logoImg, x, y, logoSize, logoSize);
+          } else {
+            logoImg.onload = () => ctx.drawImage(logoImg, x, y, logoSize, logoSize);
           }
 
-          // Text scaling
+          // Text
           const titleFontSize = Math.max(qrWidth / 10, 20);
           const smallFontSize = Math.max(qrWidth / 14, 16);
 
@@ -101,7 +112,7 @@
           ctx.font = `${smallFontSize}px Arial`;
           ctx.fillText(instruction, qrWidth / 2, qrHeight + topSpace + smallFontSize + 10);
 
-          // Add download button
+          // Add to results
           const container = document.createElement("div");
           container.appendChild(canvas);
           const downloadBtn = document.createElement("button");
@@ -114,9 +125,30 @@
           };
           container.appendChild(downloadBtn);
           resultsDiv.appendChild(container);
+
+          // Store canvas for ZIP
+          generatedCanvases.push({canvas, filename: `${name.replace(/\s+/g,"_")}.png`});
+
+          // Show ZIP button if at least one QR generated
+          if (generatedCanvases.length > 0) {
+            downloadZipBtn.style.display = "inline-block";
+          }
         }, 500);
       });
     }
+
+    downloadZipBtn.addEventListener("click", () => {
+      if (generatedCanvases.length === 0) return;
+      const zip = new JSZip();
+      generatedCanvases.forEach(({canvas, filename}) => {
+        const dataUrl = canvas.toDataURL("image/png");
+        const base64Data = dataUrl.split(",")[1];
+        zip.file(filename, base64Data, {base64: true});
+      });
+      zip.generateAsync({type:"blob"}).then(content => {
+        saveAs(content, "qr_codes.zip");
+      });
+    });
 
     addEntry(); // start with one entry
   </script>
