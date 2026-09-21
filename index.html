@@ -67,8 +67,11 @@
           colorLight: "#ffffff"
         });
 
+        // Wait for QR to render
         setTimeout(() => {
           const qrCanvas = qrDiv.querySelector("canvas");
+          if (!qrCanvas) return; // safety check
+
           const qrWidth = qrCanvas.width;
           const qrHeight = qrCanvas.height;
 
@@ -83,17 +86,18 @@
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(qrCanvas, 0, topSpace);
 
-          // Overlay logo in center with dynamic scaling
-          const logoSize = qrWidth * 0.20;  // 20% of QR width
-          const x = (qrWidth - logoSize) / 2;
-          const y = topSpace + (qrHeight - logoSize) / 2;
-
-          if (logoImg.complete) {
+          // Overlay logo once loaded
+          logoImg.onload = () => {
+            const logoSize = qrWidth * 0.20;  // 20% of QR width
+            const x = (qrWidth - logoSize) / 2;
+            const y = topSpace + (qrHeight - logoSize) / 2;
             ctx.drawImage(logoImg, x, y, logoSize, logoSize);
-          } else {
-            logoImg.onload = () => {
-              ctx.drawImage(logoImg, x, y, logoSize, logoSize);
-            };
+          };
+          if (logoImg.complete) {
+            const logoSize = qrWidth * 0.20;
+            const x = (qrWidth - logoSize) / 2;
+            const y = topSpace + (qrHeight - logoSize) / 2;
+            ctx.drawImage(logoImg, x, y, logoSize, logoSize);
           }
 
           // Scale fonts
